@@ -61,12 +61,4 @@
 5. **Generate Random System**: Click the "Generate Random System" button to create random equations.
 6. **View Visualization**: The canvas will update in real-time to display the vector field.
 
-## License
-This project is licensed under the MIT License.
-
-## Contact
-For questions or support, please open an issue on the GitHub repository.
-
----
-
-By following these instructions, you should be able to set up and use the `VectorFieldVisualization` app effectively. Enjoy exploring vector fields!
+Have fun!
