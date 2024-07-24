@@ -10,6 +10,10 @@
 - **Random System Generation**: Provides a button to generate random differential equations for exploration.
 - **Error Handling**: Displays error messages for invalid expressions.
 
+
+## Demo Video
+[![VectorFieldVisualization Demo](https://img.youtube.com/vi/Feqr2ahexO4/0.jpg)](https://www.youtube.com/watch?v=Feqr2ahexO4)
+
 ## Components
 ### App.js
 - **State Management**: Manages state for differential equations (`dx`, `dy`), range (`xMin`, `xMax`, `yMin`, `yMax`), parameters (`a`, `b`), color scheme, and background color.
