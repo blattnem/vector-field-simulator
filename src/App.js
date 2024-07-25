@@ -32,20 +32,88 @@ const colorSchemes = {
 };
 
 const predefinedSystems = {
-  custom: { name: 'Custom', dx: 'a*x*(1-x)*(x-1) -y + 2.1', dy: 'b*y*(1-y)*(1-x)', a: 4, b: 1.5 },
-  lotkaVolterra: { name: 'Lotka-Volterra', dx: 'a*x - b*x*y', dy: '-y + x*y', a: 1, b: 1 },
-  vanDerPol: { name: 'Van der Pol', dx: 'y', dy: 'a*(1 - x^2)*y - x', a: 1, b: 0 },
-  duffing: { name: 'Duffing', dx: 'y', dy: '-b*y - a*x - x^3', a: 1, b: 0.3 },
-  brusselator: { name: 'Brusselator', dx: 'a + x^2*y - (b+1)*x', dy: 'b*x - x^2*y', a: 1, b: 3 },
-  fitzhughNagumo: { name: 'FitzHugh-Nagumo', dx: 'x - x^3/3 - y + a', dy: 'b*(x + 0.7 - 0.8*y)', a: 0.7, b: 0.8 },
-  selkov: { name: 'Selkov', dx: '-x + a*y + x^2*y', dy: 'b - a*y - x^2*y', a: 0.08, b: 0.6 },
-  // New systems:
-  bogdanovTakens: { name: 'Bogdanov-Takens', dx: 'y', dy: 'a + b*x + x^2 + x*y', a: 0.5, b: 0.5 },
-  vanDerPolDuffing: { name: 'Van der Pol-Duffing', dx: 'y', dy: '-x + a*y - y^3 + b*cos(x)', a: 1, b: 0.3 },
-  //  rayleighBenard: { name: 'Rayleigh-Bénard', dx: 'a*x - y - x*z', dy: 'x*(b - z) - y', a: 10, b: 28 },
-  // rosslerAttractor: { name: 'Rössler Attractor', dx: '-y - z', dy: 'x + a*y', a: 0.2, b: 5.7 },
-  circleLattice: { name: 'Circle Lattice', dx: 'sin(x) + a*sin(y)', dy: 'sin(y) + b*sin(x)', a: 1, b: 1 },
-}; 
+  custom: { 
+    name: 'Custom', 
+    dx: 'a*x*(1-x)*(x-1) -y + 2.1', 
+    dy: 'b*y*(1-y)*(1-x)', 
+    a: 4, 
+    b: 1.5,
+    description: 'Create your own system or use the random generator.'
+  },
+  lotkaVolterra: { 
+    name: 'Lotka-Volterra', 
+    dx: 'a*x - b*x*y', 
+    dy: '-y + x*y', 
+    a: 1, 
+    b: 1,
+    description: 'Models predator-prey interactions in ecological systems.'
+  },
+  vanDerPol: { 
+    name: 'Van der Pol', 
+    dx: 'y', 
+    dy: 'a*(1 - x^2)*y - x', 
+    a: 1, 
+    b: 0,
+    description: 'Describes oscillations with nonlinear damping.'
+  },
+  duffing: { 
+    name: 'Duffing', 
+    dx: 'y', 
+    dy: '-b*y - a*x - x^3', 
+    a: 1, 
+    b: 0.3,
+    description: 'Models a driven oscillator with a nonlinear elasticity.'
+  },
+  brusselator: { 
+    name: 'Brusselator', 
+    dx: 'a + x^2*y - (b+1)*x', 
+    dy: 'b*x - x^2*y', 
+    a: 1, 
+    b: 3,
+    description: 'Theoretical model for a type of autocatalytic reaction.'
+  },
+  fitzhughNagumo: { 
+    name: 'FitzHugh-Nagumo', 
+    dx: 'x - x^3/3 - y + a', 
+    dy: 'b*(x + 0.7 - 0.8*y)', 
+    a: 0.7, 
+    b: 0.8,
+    description: 'Simplified model of action potential in neurons.'
+  },
+  selkov: { 
+    name: 'Selkov', 
+    dx: '-x + a*y + x^2*y', 
+    dy: 'b - a*y - x^2*y', 
+    a: 0.08, 
+    b: 0.6,
+    description: 'Models glycolysis oscillations in cells.'
+  },
+  bogdanovTakens: { 
+    name: 'Bogdanov-Takens', 
+    dx: 'y', 
+    dy: 'a + b*x + x^2 + x*y', 
+    a: 0.5, 
+    b: 0.5,
+    description: 'Exhibits various types of bifurcations.'
+  },
+  vanDerPolDuffing: { 
+    name: 'Van der Pol-Duffing', 
+    dx: 'y', 
+    dy: '-x + a*y - y^3 + b*cos(x)', 
+    a: 1, 
+    b: 0.3,
+    description: 'Combines features of Van der Pol and Duffing oscillators.'
+  },
+  circleLattice: { 
+    name: 'Circle Lattice', 
+    dx: 'sin(x) + a*sin(y)', 
+    dy: 'sin(y) + b*sin(x)', 
+    a: 1, 
+    b: 1,
+    description: 'Produces interesting circular patterns.'
+  },
+};
+
 
 function App() {
   const [dx, setDx] = useState(predefinedSystems.custom.dx);
@@ -121,10 +189,12 @@ function App() {
     <div className="App">
       <div className="controls">
         <div>
-          <label>Predefined Systems: </label>
+        <label>Predefined Systems: </label>
           <select value={selectedSystem} onChange={handleSystemChange}>
             {Object.entries(predefinedSystems).map(([key, system]) => (
-              <option key={key} value={key}>{system.name}</option>
+              <option key={key} value={key} title={system.description}>
+                {system.name}
+              </option>
             ))}
           </select>
         </div>
