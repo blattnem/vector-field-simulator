@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import VectorFieldVisualization from './components/VectorFieldVisualization';
 import './App.css';
 
-
 const colorSchemes = {
   ocean: {
     name: 'Ocean',
@@ -39,63 +38,56 @@ function App() {
   const [xMax, setXMax] = useState(5);
   const [yMin, setYMin] = useState(-5);
   const [yMax, setYMax] = useState(5);
-  const [a, setA] = useState('4');
-  const [b, setB] = useState('1.5');
+  const [a, setA] = useState(4);
+  const [b, setB] = useState(1.5);
   const [colorScheme, setColorScheme] = useState('rainbow');
   const [backgroundColor, setBackgroundColor] = useState('#000014');
   const [traceMode, setTraceMode] = useState(false);
 
-  const handleParameterChange = (setter) => (e) => {
-    const value = e.target.value;
-    if (/^-?\d*\.?\d*$/.test(value)) {
-      setter(value);
-    }
-  };
-
   const generateRandomEquation = () => {
-    const terms = ['x', 'y'];
-    const operators = ['+', '-', '*', '/'];
+    const terms = ['a', 'b', 'x*y'];
     const functions = ['sin', 'cos'];
     
-    const generateTerm = () => {
-      const term = terms[Math.floor(Math.random() * terms.length)];
+    const generateTerm = (variable) => {
+      if (variable === 'x*y') return variable; // Don't modify the interaction term
       const coefficient = Math.floor(Math.random() * 9) + 1; // Random integer between 1 and 9
-      const power = Math.floor(Math.random() * 5) + 1; // Random integer between 1 and 3
+      const power = Math.floor(Math.random() * 3) + 1; // Random integer between 1 and 3
       if (coefficient === 1) {
-        return power === 1 ? term : `${term}^${power}`;
+        return power === 1 ? variable : `${variable}^${power}`;
       }
-      return power === 1 ? `${coefficient}*${term}` : `${coefficient}*${term}^${power}`;
+      return power === 1 ? `${coefficient}*${variable}` : `${coefficient}*${variable}^${power}`;
     };
     
     const generateExpression = () => {
-      const numTerms = Math.floor(Math.random() * 2) + 2; // 2 to 3 terms
-      let expr = [];
+      let expr = [generateTerm('x'), generateTerm('y')];
       
-      for (let i = 0; i < numTerms; i++) {
-        let term = generateTerm();
-        
-        // Randomly wrap term in a function
-        if (Math.random() < 0.3) {
+      // Add 1-3 additional terms
+      const additionalTerms = Math.floor(Math.random() * 3) + 1;
+      for (let i = 0; i < additionalTerms; i++) {
+        const term = generateTerm(terms[Math.floor(Math.random() * terms.length)]);
+        expr.push(term);
+      }
+      
+      // Randomly apply functions and make terms negative
+      expr = expr.map(term => {
+        if (Math.random() < 0.3 && term !== 'x*y') {
           const func = functions[Math.floor(Math.random() * functions.length)];
           term = `${func}(${term})`;
         }
-        
-        // For terms after the first, randomly make them negative
-        if (i > 0 && Math.random() < 0.5) {
-          expr.push('-');
-          expr.push(term);
-        } else {
-          if (i > 0) expr.push('+');
-          expr.push(term);
-        }
-      }
+        return Math.random() < 0.5 ? `-${term}` : term;
+      });
       
-      return expr.join(' ');
+      return expr.join(' + ').replace(/\+ -/g, '- ');
     };
     
     setDx(generateExpression());
     setDy(generateExpression());
+    
+    // Set 'a' to -1 and 'b' to 1
+    setA(-1);
+    setB(1);
   };
+
   const currentColorScheme = colorSchemes[colorScheme] || colorSchemes.rainbow;
 
   return (
@@ -120,21 +112,27 @@ function App() {
           <input type="number" value={yMax} onChange={(e) => setYMax(Number(e.target.value))} />
         </div>
         <div>
-          <label>a: </label>
+          <label>a: {a.toFixed(1)}</label>
           <input 
-            type="text"
+            type="range"
+            min="-10"
+            max="10"
+            step="0.1"
             value={a}
-            onChange={handleParameterChange(setA)}
-            style={{width: '60px'}}
+            onChange={(e) => setA(Number(e.target.value))}
+            style={{width: '200px'}}
           />
         </div>
         <div>
-          <label>b: </label>
+          <label>b: {b.toFixed(1)}</label>
           <input 
-            type="text"
+            type="range"
+            min="-10"
+            max="10"
+            step="0.1"
             value={b}
-            onChange={handleParameterChange(setB)}
-            style={{width: '60px'}}
+            onChange={(e) => setB(Number(e.target.value))}
+            style={{width: '200px'}}
           />
         </div>
         <div>
@@ -160,7 +158,7 @@ function App() {
             checked={traceMode}
             onChange={(e) => setTraceMode(e.target.checked)}
           />
-      </div>
+        </div>
       </div>
       <VectorFieldVisualization
         dx={dx}
@@ -169,8 +167,8 @@ function App() {
         xMax={xMax}
         yMin={yMin}
         yMax={yMax}
-        a={parseFloat(a) || 0}
-        b={parseFloat(b) || 0}
+        a={a}
+        b={b}
         colorScheme={currentColorScheme}
         backgroundColor={backgroundColor}
         onGenerateRandomSystem={generateRandomEquation}
