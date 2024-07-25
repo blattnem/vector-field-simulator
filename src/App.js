@@ -25,14 +25,14 @@ const colorSchemes = {
 };
 
 function App() {
-  const [dx, setDx] = useState('x*(1-x)*(x-1) -y + 2.1');
-  const [dy, setDy] = useState('y*(1-y)*(1-x)');
+  const [dx, setDx] = useState('a*x*(1-x)*(x-1) -y + 2.1');
+  const [dy, setDy] = useState('b*y*(1-y)*(1-x)');
   const [xMin, setXMin] = useState(-5);
   const [xMax, setXMax] = useState(5);
   const [yMin, setYMin] = useState(-5);
   const [yMax, setYMax] = useState(5);
-  const [a, setA] = useState('0');
-  const [b, setB] = useState('0');
+  const [a, setA] = useState('4');
+  const [b, setB] = useState('1.5');
   const [colorScheme, setColorScheme] = useState('rainbow');
   const [backgroundColor, setBackgroundColor] = useState('#000014');
 
