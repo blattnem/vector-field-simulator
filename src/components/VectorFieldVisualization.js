@@ -335,7 +335,7 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
           top: '10px',
           right: '10px',
           padding: '10px',
-          backgroundColor: '#4CAF50',
+          backgroundColor: '#4c5caf',
           color: 'white',
           border: 'none',
           borderRadius: '5px',
