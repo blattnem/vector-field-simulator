@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import VectorFieldVisualization from './components/VectorFieldVisualization';
+import PhasePortrait from './components/PhasePortrait';
 import './App.css';
 
 const colorSchemes = {
@@ -265,22 +266,42 @@ function App() {
           />
         </div>
       </div>
-      <VectorFieldVisualization
-        dx={dx}
-        dy={dy}
-        xMin={xMin}
-        xMax={xMax}
-        yMin={yMin}
-        yMax={yMax}
-        a={a}
-        b={b}
-        colorScheme={currentColorScheme}
-        backgroundColor={backgroundColor}
-        onGenerateRandomSystem={generateRandomEquation}
-        traceMode={traceMode}
-      />
+      <div className="visualization-container">
+  <div className="vector-field-container">
+    <VectorFieldVisualization
+      dx={dx}
+      dy={dy}
+      xMin={xMin}
+      xMax={xMax}
+      yMin={yMin}
+      yMax={yMax}
+      a={a}
+      b={b}
+      colorScheme={currentColorScheme}
+      backgroundColor={backgroundColor}
+      onGenerateRandomSystem={generateRandomEquation}
+      traceMode={traceMode}
+    />
+  </div>
+  <div className="phase-portrait-container">
+    <PhasePortrait
+      dx={dx}
+      dy={dy}
+      xMin={xMin}
+      xMax={xMax}
+      yMin={yMin}
+      yMax={yMax}
+      a={a}
+      b={b}
+      colorScheme={currentColorScheme}
+      backgroundColor={backgroundColor}
+
+    />
+  </div>
+</div>
     </div>
-  );
+
+);
 }
 
 export default App;

@@ -11,14 +11,14 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
   useEffect(() => {
     if (traceMode) {
       tracedParticlesRef.current = Array(20).fill().map(() => ({
-        x: Math.random() * canvasSize.width,
-        y: Math.random() * canvasSize.height,
+        x: xMin + Math.random() * (xMax - xMin),
+        y: yMin + Math.random() * (yMax - yMin),
         history: []
       }));
     } else {
       tracedParticlesRef.current = [];
     }
-  }, [traceMode, canvasSize]);
+  }, [traceMode, xMin, xMax, yMin, yMax]);
 
   const safeSetError = useCallback((errorMessage) => {
     if (isMounted.current) {
@@ -31,17 +31,7 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
     const newWidth = window.innerWidth - padding * 2;
     const newHeight = window.innerHeight - 80;
 
-    setCanvasSize(prevSize => {
-      if (prevSize.width !== 0 && prevSize.height !== 0) {
-        // Adjust particle positions
-        particlesRef.current = particlesRef.current.map(particle => ({
-          ...particle,
-          x: (particle.x / prevSize.width) * newWidth,
-          y: (particle.y / prevSize.height) * newHeight
-        }));
-      }
-      return { width: newWidth, height: newHeight };
-    });
+    setCanvasSize({ width: newWidth, height: newHeight });
   }, []);
 
   useEffect(() => {
@@ -167,13 +157,14 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
     const fadeInDuration = 30;
     const fadeOutDuration = 30;
     const maxVisibleAge = maxAge - fadeOutDuration;
+    const dt = 0.01;
 
     // Initialize particles if they don't exist
     if (particlesRef.current.length === 0) {
       for (let i = 0; i < particleCount; i++) {
         particlesRef.current.push({
-          x: Math.random() * width,
-          y: Math.random() * height,
+          x: xMin + Math.random() * (xMax - xMin),
+          y: yMin + Math.random() * (yMax - yMin),
           age: Math.random() * maxAge,
           fadeInAge: Math.floor(Math.random() * fadeInDuration)
         });
@@ -192,13 +183,10 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
       let successfulEvaluation = false;
     
       particlesRef.current.forEach((particle, index) => {
-        const x = xMin + (particle.x / width) * (xMax - xMin);
-        const y = yMax - (particle.y / height) * (yMax - yMin);
-    
         let vx, vy;
         try {
-          vx = evaluateExpression(dx, x, y, a, b);
-          vy = evaluateExpression(dy, x, y, a, b);
+          vx = evaluateExpression(dx, particle.x, particle.y, a, b);
+          vy = evaluateExpression(dy, particle.x, particle.y, a, b);
           if (isFinite(vx) && isFinite(vy)) {
             successfulEvaluation = true;
           } else {
@@ -211,8 +199,8 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
         const magnitude = Math.sqrt(vx * vx + vy * vy);
         const scaleFactor = 2 / (1 + magnitude);
         
-        particle.x += vx * scaleFactor;
-        particle.y -= vy * scaleFactor;
+        particle.x += vx * scaleFactor * dt;
+        particle.y += vy * scaleFactor * dt;
         particle.age += 1;
     
         // Calculate alpha based on particle age
@@ -225,30 +213,33 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
           alpha = 1;
         }
     
-        // Smooth transition for particles leaving the canvas
-        if (particle.x < 0 || particle.x > width || particle.y < 0 || particle.y > height) {
-          alpha *= 0.95; // Gradually fade out particles leaving the canvas
+        // Smooth transition for particles leaving the system bounds
+        if (particle.x < xMin || particle.x > xMax || particle.y < yMin || particle.y > yMax) {
+          alpha *= 0.95;
         }
     
         alpha = Math.max(0, Math.min(1, alpha));
     
+        const canvasX = ((particle.x - xMin) / (xMax - xMin)) * width;
+        const canvasY = height - ((particle.y - yMin) / (yMax - yMin)) * height;
+    
         const color = colorScheme.getColor(Math.atan2(vy, vx), alpha, magnitude);
         ctx.beginPath();
-        ctx.arc(particle.x, particle.y, 1.5, 0, Math.PI * 1.5);
+        ctx.arc(canvasX, canvasY, 1.5, 0, Math.PI * 1.5);
         ctx.fillStyle = color;
         ctx.fill();
     
-        const gradient = ctx.createRadialGradient(particle.x, particle.y, 0, particle.x, particle.y, 4);
+        const gradient = ctx.createRadialGradient(canvasX, canvasY, 0, canvasX, canvasY, 4);
         gradient.addColorStop(0, color);
         gradient.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = gradient;
-        ctx.fillRect(particle.x - 4, particle.y - 4, 8, 8);
+        ctx.fillRect(canvasX - 4, canvasY - 4, 8, 8);
     
         // Stagger particle reinitialization
         if (particle.age > maxAge || alpha <= 0.01) {
           if (frame % 10 === index % 10) { // Reinitialize only a subset of particles each frame
-            particle.x = Math.random() * width;
-            particle.y = Math.random() * height;
+            particle.x = xMin + Math.random() * (xMax - xMin);
+            particle.y = yMin + Math.random() * (yMax - yMin);
             particle.age = 0;
             particle.fadeInAge = Math.floor(Math.random() * fadeInDuration);
           }
@@ -258,13 +249,10 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
       // Handle traced particles
       if (traceMode) {
         tracedParticlesRef.current = tracedParticlesRef.current.map(particle => {
-          const x = xMin + (particle.x / width) * (xMax - xMin);
-          const y = yMax - (particle.y / height) * (yMax - yMin);
-
           let vx, vy;
           try {
-            vx = evaluateExpression(dx, x, y, a, b);
-            vy = evaluateExpression(dy, x, y, a, b);
+            vx = evaluateExpression(dx, particle.x, particle.y, a, b);
+            vy = evaluateExpression(dy, particle.x, particle.y, a, b);
           } catch (err) {
             return particle;
           }
@@ -272,13 +260,16 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
           const magnitude = Math.sqrt(vx * vx + vy * vy);
           const scaleFactor = 2 / (1 + magnitude);
           
-          const newX = particle.x + vx * scaleFactor;
-          const newY = particle.y - vy * scaleFactor;
+          const newX = particle.x + vx * scaleFactor * dt;
+          const newY = particle.y + vy * scaleFactor * dt;
+
+          const canvasX = ((newX - xMin) / (xMax - xMin)) * width;
+          const canvasY = height - ((newY - yMin) / (yMax - yMin)) * height;
 
           return {
             x: newX,
             y: newY,
-            history: [...particle.history, {x: particle.x, y: particle.y}].slice(-100)  // Keep last 100 points
+            history: [...particle.history, {x: canvasX, y: canvasY}].slice(-100)  // Keep last 100 points
           };
         });
 
