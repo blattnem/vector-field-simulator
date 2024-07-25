@@ -65,4 +65,9 @@
 5. **Generate Random System**: Click the "Generate Random System" button to create random equations.
 6. **View Visualization**: The canvas will update in real-time to display the vector field.
 
+# To Do
+1. Fix rendering when resize window
+2. Optimize particle flow for more particles
+3. Better visual effects - fading particles
+
 Have fun!
