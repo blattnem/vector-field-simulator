@@ -69,5 +69,8 @@
 1. Fix rendering when resize window
 2. Optimize particle flow for more particles
 3. Better visual effects - fading particles
+4. Add more pre defined equations
+5. Add option that users can save and upload equations
+6. Incorporating a phase portrait view alongside the vector field visualization
 
 Have fun!
