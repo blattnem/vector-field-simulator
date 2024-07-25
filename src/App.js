@@ -43,7 +43,7 @@ const predefinedSystems = {
   bogdanovTakens: { name: 'Bogdanov-Takens', dx: 'y', dy: 'a + b*x + x^2 + x*y', a: 0.5, b: 0.5 },
   vanDerPolDuffing: { name: 'Van der Pol-Duffing', dx: 'y', dy: '-x + a*y - y^3 + b*cos(x)', a: 1, b: 0.3 },
   //  rayleighBenard: { name: 'Rayleigh-Bénard', dx: 'a*x - y - x*z', dy: 'x*(b - z) - y', a: 10, b: 28 },
-  rosslerAttractor: { name: 'Rössler Attractor', dx: '-y - z', dy: 'x + a*y', a: 0.2, b: 5.7 },
+  // rosslerAttractor: { name: 'Rössler Attractor', dx: '-y - z', dy: 'x + a*y', a: 0.2, b: 5.7 },
   circleLattice: { name: 'Circle Lattice', dx: 'sin(x) + a*sin(y)', dy: 'sin(y) + b*sin(x)', a: 1, b: 1 },
 }; 
 
