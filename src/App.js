@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import VectorFieldVisualization from './components/VectorFieldVisualization';
 import './App.css';
 
+
 const colorSchemes = {
   ocean: {
     name: 'Ocean',
@@ -22,6 +23,13 @@ const colorSchemes = {
       return `rgba(${value}, ${value}, ${value}, ${alpha})`;
     },
   },
+  velocity: {
+    name: 'Velocity',
+    getColor: (angle, alpha = 1, magnitude = 0) => {
+      const hue = magnitude * 240; // Map magnitude to hue (0 to 240)
+      return `hsla(${hue}, 100%, 50%, ${alpha})`;
+    },
+  },
 };
 
 function App() {
@@ -35,6 +43,7 @@ function App() {
   const [b, setB] = useState('1.5');
   const [colorScheme, setColorScheme] = useState('rainbow');
   const [backgroundColor, setBackgroundColor] = useState('#000014');
+  const [traceMode, setTraceMode] = useState(false);
 
   const handleParameterChange = (setter) => (e) => {
     const value = e.target.value;
@@ -144,6 +153,14 @@ function App() {
             onChange={(e) => setBackgroundColor(e.target.value)} 
           />
         </div>
+        <div>
+        <label> Trace Mode:</label>
+          <input
+            type="checkbox"
+            checked={traceMode}
+            onChange={(e) => setTraceMode(e.target.checked)}
+          />
+      </div>
       </div>
       <VectorFieldVisualization
         dx={dx}
@@ -157,6 +174,7 @@ function App() {
         colorScheme={currentColorScheme}
         backgroundColor={backgroundColor}
         onGenerateRandomSystem={generateRandomEquation}
+        traceMode={traceMode}
       />
     </div>
   );

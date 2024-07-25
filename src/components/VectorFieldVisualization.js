@@ -1,17 +1,24 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
-const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorScheme, backgroundColor = '#000000', onGenerateRandomSystem }) => {
+const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorScheme, backgroundColor = '#000000', onGenerateRandomSystem, traceMode }) => {
   const canvasRef = useRef(null);
   const [error, setError] = useState(null);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const isMounted = useRef(true);
   const particlesRef = useRef([]);
+  const tracedParticlesRef = useRef([]);
 
   useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
+    if (traceMode) {
+      tracedParticlesRef.current = Array(20).fill().map(() => ({
+        x: Math.random() * canvasSize.width,
+        y: Math.random() * canvasSize.height,
+        history: []
+      }));
+    } else {
+      tracedParticlesRef.current = [];
+    }
+  }, [traceMode, canvasSize]);
 
   const safeSetError = useCallback((errorMessage) => {
     if (isMounted.current) {
@@ -142,7 +149,7 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
       safeSetError(`Invalid expression: ${expr}. Error: ${err.message}`);
       return 0;
     }
-  }, [safeSetError]); 
+  }, [safeSetError]);
 
   useEffect(() => {
     if (canvasSize.width === 0 || canvasSize.height === 0) return;
@@ -178,20 +185,16 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
 
     function animate() {
       if (!isMounted.current) return;
-
-      if (backgroundColor) {
-        ctx.fillStyle = `rgba(${parseInt(backgroundColor.slice(1, 3), 16)}, ${parseInt(backgroundColor.slice(3, 5), 16)}, ${parseInt(backgroundColor.slice(5, 7), 16)}, 0.1)`;
-      } else {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-      }
+    
+      ctx.fillStyle = `rgba(${parseInt(backgroundColor.slice(1, 3), 16)}, ${parseInt(backgroundColor.slice(3, 5), 16)}, ${parseInt(backgroundColor.slice(5, 7), 16)}, 0.1)`;
       ctx.fillRect(0, 0, width, height);
-
+    
       let successfulEvaluation = false;
-
+    
       particlesRef.current.forEach((particle, index) => {
         const x = xMin + (particle.x / width) * (xMax - xMin);
         const y = yMax - (particle.y / height) * (yMax - yMin);
-
+    
         let vx, vy;
         try {
           vx = evaluateExpression(dx, x, y, a, b);
@@ -204,14 +207,14 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
         } catch (err) {
           return;
         }
-
+    
         const magnitude = Math.sqrt(vx * vx + vy * vy);
         const scaleFactor = 2 / (1 + magnitude);
         
         particle.x += vx * scaleFactor;
         particle.y -= vy * scaleFactor;
         particle.age += 1;
-
+    
         // Calculate alpha based on particle age
         let alpha;
         if (particle.age <= particle.fadeInAge) {
@@ -221,27 +224,26 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
         } else {
           alpha = 1;
         }
-
+    
         // Smooth transition for particles leaving the canvas
         if (particle.x < 0 || particle.x > width || particle.y < 0 || particle.y > height) {
           alpha *= 0.95; // Gradually fade out particles leaving the canvas
         }
-
+    
         alpha = Math.max(0, Math.min(1, alpha));
-
-        const color = colorScheme.getColor(Math.atan2(vy, vx), alpha);
-
+    
+        const color = colorScheme.getColor(Math.atan2(vy, vx), alpha, magnitude);
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, 1.5, 0, Math.PI * 1.5);
         ctx.fillStyle = color;
         ctx.fill();
-
+    
         const gradient = ctx.createRadialGradient(particle.x, particle.y, 0, particle.x, particle.y, 4);
         gradient.addColorStop(0, color);
         gradient.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = gradient;
         ctx.fillRect(particle.x - 4, particle.y - 4, 8, 8);
-
+    
         // Stagger particle reinitialization
         if (particle.age > maxAge || alpha <= 0.01) {
           if (frame % 10 === index % 10) { // Reinitialize only a subset of particles each frame
@@ -252,14 +254,56 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
           }
         }
       });
+    
+      // Handle traced particles
+      if (traceMode) {
+        tracedParticlesRef.current = tracedParticlesRef.current.map(particle => {
+          const x = xMin + (particle.x / width) * (xMax - xMin);
+          const y = yMax - (particle.y / height) * (yMax - yMin);
 
+          let vx, vy;
+          try {
+            vx = evaluateExpression(dx, x, y, a, b);
+            vy = evaluateExpression(dy, x, y, a, b);
+          } catch (err) {
+            return particle;
+          }
+
+          const magnitude = Math.sqrt(vx * vx + vy * vy);
+          const scaleFactor = 2 / (1 + magnitude);
+          
+          const newX = particle.x + vx * scaleFactor;
+          const newY = particle.y - vy * scaleFactor;
+
+          return {
+            x: newX,
+            y: newY,
+            history: [...particle.history, {x: particle.x, y: particle.y}].slice(-100)  // Keep last 100 points
+          };
+        });
+
+        // Render traced particles
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 2;
+        tracedParticlesRef.current.forEach(particle => {
+          if (particle.history.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(particle.history[0].x, particle.history[0].y);
+            particle.history.forEach(point => {
+              ctx.lineTo(point.x, point.y);
+            });
+            ctx.stroke();
+          }
+        });
+      }
+    
       if (successfulEvaluation) {
         safeSetError(null);
       } else {
         console.log(`No successful evaluations. dx="${dx}", dy="${dy}", a=${a}, b=${b}`);
         safeSetError("No valid particles. Check your equations.");
       }
-
+    
       frame++;
       animationFrameId = requestAnimationFrame(animate);
     }
@@ -269,7 +313,11 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [dx, dy, xMin, xMax, yMin, yMax, a, b, canvasSize, evaluateExpression, colorScheme, backgroundColor, safeSetError]);
+  }, [dx, dy, xMin, xMax, yMin, yMax, a, b, canvasSize, evaluateExpression, colorScheme, backgroundColor, safeSetError, traceMode]);
+
+  const clearTraces = () => {
+    tracedParticlesRef.current = [];
+  };
 
   return (
     <div className="canvas-container" style={{ 
@@ -296,6 +344,24 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
       >
         Generate Random System
       </button>
+      {traceMode && (
+        <button 
+          onClick={clearTraces}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '200px',
+            padding: '10px',
+            backgroundColor: '#f44336',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          Clear Traces
+        </button>
+      )}
     </div>
   );
 };
