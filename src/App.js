@@ -31,18 +31,35 @@ const colorSchemes = {
   },
 };
 
+const predefinedSystems = {
+  custom: { name: 'Custom', dx: 'a*x*(1-x)*(x-1) -y + 2.1', dy: 'b*y*(1-y)*(1-x)', a: 4, b: 1.5 },
+  lotkaVolterra: { name: 'Lotka-Volterra', dx: 'a*x - b*x*y', dy: '-y + x*y', a: 1, b: 1 },
+  vanDerPol: { name: 'Van der Pol', dx: 'y', dy: 'a*(1 - x^2)*y - x', a: 1, b: 0 },
+  duffing: { name: 'Duffing', dx: 'y', dy: '-b*y - a*x - x^3', a: 1, b: 0.3 },
+  brusselator: { name: 'Brusselator', dx: 'a + x^2*y - (b+1)*x', dy: 'b*x - x^2*y', a: 1, b: 3 },
+  fitzhughNagumo: { name: 'FitzHugh-Nagumo', dx: 'x - x^3/3 - y + a', dy: 'b*(x + 0.7 - 0.8*y)', a: 0.7, b: 0.8 },
+  selkov: { name: 'Selkov', dx: '-x + a*y + x^2*y', dy: 'b - a*y - x^2*y', a: 0.08, b: 0.6 },
+  // New systems:
+  bogdanovTakens: { name: 'Bogdanov-Takens', dx: 'y', dy: 'a + b*x + x^2 + x*y', a: 0.5, b: 0.5 },
+  vanDerPolDuffing: { name: 'Van der Pol-Duffing', dx: 'y', dy: '-x + a*y - y^3 + b*cos(x)', a: 1, b: 0.3 },
+  //  rayleighBenard: { name: 'Rayleigh-Bénard', dx: 'a*x - y - x*z', dy: 'x*(b - z) - y', a: 10, b: 28 },
+  rosslerAttractor: { name: 'Rössler Attractor', dx: '-y - z', dy: 'x + a*y', a: 0.2, b: 5.7 },
+  circleLattice: { name: 'Circle Lattice', dx: 'sin(x) + a*sin(y)', dy: 'sin(y) + b*sin(x)', a: 1, b: 1 },
+}; 
+
 function App() {
-  const [dx, setDx] = useState('a*x*(1-x)*(x-1) -y + 2.1');
-  const [dy, setDy] = useState('b*y*(1-y)*(1-x)');
+  const [dx, setDx] = useState(predefinedSystems.custom.dx);
+  const [dy, setDy] = useState(predefinedSystems.custom.dy);
   const [xMin, setXMin] = useState(-5);
   const [xMax, setXMax] = useState(5);
   const [yMin, setYMin] = useState(-5);
   const [yMax, setYMax] = useState(5);
-  const [a, setA] = useState(4);
-  const [b, setB] = useState(1.5);
+  const [a, setA] = useState(predefinedSystems.custom.a);
+  const [b, setB] = useState(predefinedSystems.custom.b);
   const [colorScheme, setColorScheme] = useState('rainbow');
   const [backgroundColor, setBackgroundColor] = useState('#000014');
   const [traceMode, setTraceMode] = useState(false);
+  const [selectedSystem, setSelectedSystem] = useState('custom');
 
   const generateRandomEquation = () => {
     const terms = ['a', 'b', 'x*y'];
@@ -82,10 +99,20 @@ function App() {
     
     setDx(generateExpression());
     setDy(generateExpression());
+    setSelectedSystem('custom');
     
     // Set 'a' to -1 and 'b' to 1
     setA(-1);
     setB(1);
+  };
+
+  const handleSystemChange = (e) => {
+    const system = predefinedSystems[e.target.value];
+    setSelectedSystem(e.target.value);
+    setDx(system.dx);
+    setDy(system.dy);
+    setA(system.a);
+    setB(system.b);
   };
 
   const currentColorScheme = colorSchemes[colorScheme] || colorSchemes.rainbow;
@@ -94,12 +121,20 @@ function App() {
     <div className="App">
       <div className="controls">
         <div>
+          <label>Predefined Systems: </label>
+          <select value={selectedSystem} onChange={handleSystemChange}>
+            {Object.entries(predefinedSystems).map(([key, system]) => (
+              <option key={key} value={key}>{system.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
           <label>dx/dt: </label>
-          <input value={dx} onChange={(e) => setDx(e.target.value)} />
+          <input value={dx} onChange={(e) => {setDx(e.target.value); setSelectedSystem('custom');}} />
         </div>
         <div>
           <label>dy/dt: </label>
-          <input value={dy} onChange={(e) => setDy(e.target.value)} />
+          <input value={dy} onChange={(e) => {setDy(e.target.value); setSelectedSystem('custom');}} />
         </div>
         <div>
           <label>X Range: </label>
@@ -119,7 +154,7 @@ function App() {
             max="10"
             step="0.1"
             value={a}
-            onChange={(e) => setA(Number(e.target.value))}
+            onChange={(e) => {setA(Number(e.target.value)); setSelectedSystem('custom');}}
             style={{width: '200px'}}
           />
         </div>
@@ -131,7 +166,7 @@ function App() {
             max="10"
             step="0.1"
             value={b}
-            onChange={(e) => setB(Number(e.target.value))}
+            onChange={(e) => {setB(Number(e.target.value)); setSelectedSystem('custom');}}
             style={{width: '200px'}}
           />
         </div>
@@ -152,7 +187,7 @@ function App() {
           />
         </div>
         <div>
-        <label> Trace Mode:</label>
+          <label> Trace Mode:</label>
           <input
             type="checkbox"
             checked={traceMode}
