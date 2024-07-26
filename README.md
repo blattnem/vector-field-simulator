@@ -73,4 +73,6 @@
 5. Add option that users can save and upload equations
 6. Incorporating a phase portrait view alongside the vector field visualization
 
+Be nice and give some credits.
+
 Have fun!
