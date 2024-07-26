@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 
 const PhasePortrait = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorScheme, backgroundColor = '#000000', size = 300 }) => {
   const canvasRef = useRef(null);
@@ -23,98 +23,100 @@ const PhasePortrait = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorScheme, back
     };
   }, [updateCanvasSize]);
 
-  const evaluateExpression = useCallback((expr, x, y, a, b) => {
-    try {
-      const cleanExpr = expr.trim().replace(/;+$/, '');
-      
-      if (cleanExpr === '') {
-        throw new Error('Empty expression');
-      }
-      
-      const parse = (str) => {
-        const tokens = str.match(/(\d+\.?\d*|\+|\-|\*|\/|\(|\)|\^|[a-zA-Z]+)/g) || [];
-        let pos = 0;
+  const evaluateExpression = useMemo(() => {
+    return (expr, x, y, a, b) => {
+      try {
+        const cleanExpr = expr.trim().replace(/;+$/, '');
         
-        const parseExpression = () => {
-          let left = parseTerm();
-          while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
-            const op = tokens[pos++];
-            const right = parseTerm();
-            left = op === '+' ? left + right : left - right;
-          }
-          return left;
-        };
-        
-        const parseTerm = () => {
-          let left = parseFactor();
-          while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/')) {
-            const op = tokens[pos++];
-            const right = parseFactor();
-            left = op === '*' ? left * right : left / right;
-          }
-          return left;
-        };
-        
-        const parseFactor = () => {
-          let left = parseBase();
-          if (pos < tokens.length && tokens[pos] === '^') {
-            pos++;
-            const right = parseFactor();
-            return Math.pow(left, right);
-          }
-          return left;
-        };
-        
-        const parseBase = () => {
-          if (tokens[pos] === '(') {
-            pos++;
-            const result = parseExpression();
-            if (pos < tokens.length && tokens[pos] === ')') {
-              pos++;
-            } else {
-              throw new Error('Mismatched parentheses');
-            }
-            return result;
-          }
-          if (tokens[pos] === '-') {
-            pos++;
-            return -parseFactor();
-          }
-          if (isNaN(tokens[pos])) {
-            const token = tokens[pos++];
-            if (token === 'x') return x;
-            if (token === 'y') return y;
-            if (token === 'a') return a;
-            if (token === 'b') return b;
-            if (token === 'sin') return Math.sin(parseFactor());
-            if (token === 'cos') return Math.cos(parseFactor());
-            if (token === 'tan') return Math.tan(parseFactor());
-            if (token === 'exp') return Math.exp(parseFactor());
-            if (token === 'sqrt') return Math.sqrt(parseFactor());
-            throw new Error(`Unknown token: ${token}`);
-          }
-          return parseFloat(tokens[pos++]);
-        };
-        
-        const result = parseExpression();
-        if (pos < tokens.length) {
-          throw new Error(`Unexpected token: ${tokens[pos]}`);
+        if (cleanExpr === '') {
+          throw new Error('Empty expression');
         }
+        
+        const parse = (str) => {
+          const tokens = str.match(/(\d+\.?\d*|\+|\-|\*|\/|\(|\)|\^|[a-zA-Z]+)/g) || [];
+          let pos = 0;
+          
+          const parseExpression = () => {
+            let left = parseTerm();
+            while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
+              const op = tokens[pos++];
+              const right = parseTerm();
+              left = op === '+' ? left + right : left - right;
+            }
+            return left;
+          };
+          
+          const parseTerm = () => {
+            let left = parseFactor();
+            while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/')) {
+              const op = tokens[pos++];
+              const right = parseFactor();
+              left = op === '*' ? left * right : left / right;
+            }
+            return left;
+          };
+          
+          const parseFactor = () => {
+            let left = parseBase();
+            if (pos < tokens.length && tokens[pos] === '^') {
+              pos++;
+              const right = parseFactor();
+              return Math.pow(left, right);
+            }
+            return left;
+          };
+          
+          const parseBase = () => {
+            if (tokens[pos] === '(') {
+              pos++;
+              const result = parseExpression();
+              if (pos < tokens.length && tokens[pos] === ')') {
+                pos++;
+              } else {
+                throw new Error('Mismatched parentheses');
+              }
+              return result;
+            }
+            if (tokens[pos] === '-') {
+              pos++;
+              return -parseFactor();
+            }
+            if (isNaN(tokens[pos])) {
+              const token = tokens[pos++];
+              if (token === 'x') return x;
+              if (token === 'y') return y;
+              if (token === 'a') return a;
+              if (token === 'b') return b;
+              if (token === 'sin') return Math.sin(parseFactor());
+              if (token === 'cos') return Math.cos(parseFactor());
+              if (token === 'tan') return Math.tan(parseFactor());
+              if (token === 'exp') return Math.exp(parseFactor());
+              if (token === 'sqrt') return Math.sqrt(parseFactor());
+              throw new Error(`Unknown token: ${token}`);
+            }
+            return parseFloat(tokens[pos++]);
+          };
+          
+          const result = parseExpression();
+          if (pos < tokens.length) {
+            throw new Error(`Unexpected token: ${tokens[pos]}`);
+          }
+          return result;
+        };
+        
+        const result = parse(cleanExpr);
+        
+        if (typeof result !== 'number' || !isFinite(result)) {
+          throw new Error('Expression did not evaluate to a finite number');
+        }
+        
         return result;
-      };
-      
-      const result = parse(cleanExpr);
-      
-      if (typeof result !== 'number' || !isFinite(result)) {
-        throw new Error('Expression did not evaluate to a finite number');
+      } catch (err) {
+        console.error("Error evaluating expression:", err);
+        safeSetError(`Invalid expression: ${expr}. Error: ${err.message}`);
+        return 0;
       }
-      
-      return result;
-    } catch (err) {
-      console.error("Error evaluating expression:", err);
-      safeSetError(`Invalid expression: ${expr}. Error: ${err.message}`);
-      return 0;
-    }
+    };
   }, [safeSetError]);
 
   useEffect(() => {
@@ -191,6 +193,7 @@ const PhasePortrait = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorScheme, back
     }
   
   }, [dx, dy, xMin, xMax, yMin, yMax, a, b, canvasSize, evaluateExpression, colorScheme, backgroundColor, safeSetError]);
+
   return (
     <div className="canvas-container" style={{ 
       position: 'absolute',

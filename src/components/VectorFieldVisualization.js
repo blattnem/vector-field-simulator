@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 
 const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorScheme, backgroundColor = '#000000', onGenerateRandomSystem, traceMode }) => {
   const canvasRef = useRef(null);
@@ -41,104 +41,106 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
     return () => window.removeEventListener('resize', updateCanvasSize);
   }, [updateCanvasSize]);
 
-  const evaluateExpression = useCallback((expr, x, y, a, b) => {
-    try {
-      const cleanExpr = expr.trim().replace(/;+$/, '');
-      
-      if (cleanExpr === '') {
-        throw new Error('Empty expression');
-      }
-      
-      const parse = (str) => {
-        const tokens = str.match(/(\d+\.?\d*|\+|\-|\*|\/|\(|\)|\^|[a-zA-Z]+)/g) || [];
-        let pos = 0;
+  const evaluateExpression = useMemo(() => {
+    return (expr, x, y, a, b) => {
+      try {
+        const cleanExpr = expr.trim().replace(/;+$/, '');
         
-        const parseExpression = () => {
-          if (pos >= tokens.length) {
-            throw new Error('Unexpected end of expression');
-          }
-          let left = parseTerm();
-          while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
-            const op = tokens[pos++];
-            const right = parseTerm();
-            left = op === '+' ? left + right : left - right;
-          }
-          return left;
-        };
-        
-        const parseTerm = () => {
-          let left = parseFactor();
-          while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/')) {
-            const op = tokens[pos++];
-            const right = parseFactor();
-            left = op === '*' ? left * right : left / right;
-          }
-          return left;
-        };
-        
-        const parseFactor = () => {
-          if (pos >= tokens.length) {
-            throw new Error('Unexpected end of expression');
-          }
-          let left = parseBase();
-          if (pos < tokens.length && tokens[pos] === '^') {
-            pos++;
-            const right = parseFactor();
-            return Math.pow(left, right);
-          }
-          return left;
-        };
-        
-        const parseBase = () => {
-          if (tokens[pos] === '(') {
-            pos++;
-            const result = parseExpression();
-            if (pos < tokens.length && tokens[pos] === ')') {
-              pos++;
-            } else {
-              throw new Error('Mismatched parentheses');
-            }
-            return result;
-          }
-          if (tokens[pos] === '-') {
-            pos++;
-            return -parseFactor();
-          }
-          if (isNaN(tokens[pos])) {
-            const token = tokens[pos++];
-            if (token === 'x') return x;
-            if (token === 'y') return y;
-            if (token === 'a') return a;
-            if (token === 'b') return b;
-            if (token === 'sin') return Math.sin(parseFactor());
-            if (token === 'cos') return Math.cos(parseFactor());
-            if (token === 'tan') return Math.tan(parseFactor());
-            if (token === 'exp') return Math.exp(parseFactor());
-            if (token === 'sqrt') return Math.sqrt(parseFactor());
-            throw new Error(`Unknown token: ${token}`);
-          }
-          return parseFloat(tokens[pos++]);
-        };
-        
-        const result = parseExpression();
-        if (pos < tokens.length) {
-          throw new Error(`Unexpected token: ${tokens[pos]}`);
+        if (cleanExpr === '') {
+          throw new Error('Empty expression');
         }
+        
+        const parse = (str) => {
+          const tokens = str.match(/(\d+\.?\d*|\+|\-|\*|\/|\(|\)|\^|[a-zA-Z]+)/g) || [];
+          let pos = 0;
+          
+          const parseExpression = () => {
+            if (pos >= tokens.length) {
+              throw new Error('Unexpected end of expression');
+            }
+            let left = parseTerm();
+            while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
+              const op = tokens[pos++];
+              const right = parseTerm();
+              left = op === '+' ? left + right : left - right;
+            }
+            return left;
+          };
+          
+          const parseTerm = () => {
+            let left = parseFactor();
+            while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/')) {
+              const op = tokens[pos++];
+              const right = parseFactor();
+              left = op === '*' ? left * right : left / right;
+            }
+            return left;
+          };
+          
+          const parseFactor = () => {
+            if (pos >= tokens.length) {
+              throw new Error('Unexpected end of expression');
+            }
+            let left = parseBase();
+            if (pos < tokens.length && tokens[pos] === '^') {
+              pos++;
+              const right = parseFactor();
+              return Math.pow(left, right);
+            }
+            return left;
+          };
+          
+          const parseBase = () => {
+            if (tokens[pos] === '(') {
+              pos++;
+              const result = parseExpression();
+              if (pos < tokens.length && tokens[pos] === ')') {
+                pos++;
+              } else {
+                throw new Error('Mismatched parentheses');
+              }
+              return result;
+            }
+            if (tokens[pos] === '-') {
+              pos++;
+              return -parseFactor();
+            }
+            if (isNaN(tokens[pos])) {
+              const token = tokens[pos++];
+              if (token === 'x') return x;
+              if (token === 'y') return y;
+              if (token === 'a') return a;
+              if (token === 'b') return b;
+              if (token === 'sin') return Math.sin(parseFactor());
+              if (token === 'cos') return Math.cos(parseFactor());
+              if (token === 'tan') return Math.tan(parseFactor());
+              if (token === 'exp') return Math.exp(parseFactor());
+              if (token === 'sqrt') return Math.sqrt(parseFactor());
+              throw new Error(`Unknown token: ${token}`);
+            }
+            return parseFloat(tokens[pos++]);
+          };
+          
+          const result = parseExpression();
+          if (pos < tokens.length) {
+            throw new Error(`Unexpected token: ${tokens[pos]}`);
+          }
+          return result;
+        };
+        
+        const result = parse(cleanExpr);
+        
+        if (typeof result !== 'number' || !isFinite(result)) {
+          throw new Error('Expression did not evaluate to a finite number');
+        }
+        
         return result;
-      };
-      
-      const result = parse(cleanExpr);
-      
-      if (typeof result !== 'number' || !isFinite(result)) {
-        throw new Error('Expression did not evaluate to a finite number');
+      } catch (err) {
+        console.error("Error evaluating expression:", err);
+        safeSetError(`Invalid expression: ${expr}. Error: ${err.message}`);
+        return 0;
       }
-      
-      return result;
-    } catch (err) {
-      console.error("Error evaluating expression:", err);
-      safeSetError(`Invalid expression: ${expr}. Error: ${err.message}`);
-      return 0;
-    }
+    };
   }, [safeSetError]);
 
   useEffect(() => {
@@ -182,7 +184,8 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
     
       let successfulEvaluation = false;
     
-      particlesRef.current.forEach((particle, index) => {
+      // Mutable update function
+      const updateParticle = (particle) => {
         let vx, vy;
         try {
           vx = evaluateExpression(dx, particle.x, particle.y, a, b);
@@ -190,10 +193,10 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
           if (isFinite(vx) && isFinite(vy)) {
             successfulEvaluation = true;
           } else {
-            return;
+            return particle;
           }
         } catch (err) {
-          return;
+          return particle;
         }
     
         const magnitude = Math.sqrt(vx * vx + vy * vy);
@@ -237,14 +240,19 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
     
         // Stagger particle reinitialization
         if (particle.age > maxAge || alpha <= 0.01) {
-          if (frame % 10 === index % 10) { // Reinitialize only a subset of particles each frame
+          if (frame % 10 === particlesRef.current.indexOf(particle) % 10) { // Reinitialize only a subset of particles each frame
             particle.x = xMin + Math.random() * (xMax - xMin);
             particle.y = yMin + Math.random() * (yMax - yMin);
             particle.age = 0;
             particle.fadeInAge = Math.floor(Math.random() * fadeInDuration);
           }
         }
-      });
+
+        return particle;
+      };
+
+      // Update particles mutably
+      particlesRef.current = particlesRef.current.map(updateParticle);
     
       // Handle traced particles
       if (traceMode) {
