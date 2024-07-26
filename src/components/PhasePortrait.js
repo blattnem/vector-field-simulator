@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
-const PhasePortrait = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorScheme, backgroundColor = '#000000', size = 200 }) => {
+const PhasePortrait = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorScheme, backgroundColor = '#000000', size = 400 }) => {
   const canvasRef = useRef(null);
   const [error, setError] = useState(null);
   const [canvasSize, setCanvasSize] = useState({ width: size, height: size });
@@ -131,8 +131,8 @@ const PhasePortrait = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorScheme, back
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
   
-    const numTrajectories = 20;
-    const numSteps = 1000;
+    const numTrajectories = 30;
+    const numSteps = 1100;
     const dt = 0.01;
   
     let successfulEvaluation = false;
