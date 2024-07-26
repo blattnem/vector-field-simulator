@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
-const PhasePortrait = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorScheme, backgroundColor = '#000000', size = 400 }) => {
+const PhasePortrait = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorScheme, backgroundColor = '#000000', size = 300 }) => {
   const canvasRef = useRef(null);
   const [error, setError] = useState(null);
   const [canvasSize, setCanvasSize] = useState({ width: size, height: size });
