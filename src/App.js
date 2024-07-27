@@ -273,11 +273,9 @@ function App() {
             onChange={(e) => setTraceMode(e.target.checked)}
           />
         </div>
-        <div>
-          <button className="doc-button small" onClick={() => setShowDocs(!showDocs)}>
-            {showDocs ? 'Hide' : 'Show'} Documentation
-          </button>
-        </div>  
+        <button className="doc-button small" onClick={() => setShowDocs(!showDocs)}>
+      Docs
+    </button>
       </div>
       {showDocs && (
         <div className="doc-modal">

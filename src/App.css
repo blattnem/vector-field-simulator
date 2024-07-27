@@ -27,6 +27,11 @@
   min-width: 50px;
 }
 
+.trace-and-doc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .controls > div {
   display: flex;
   flex-direction: column;
