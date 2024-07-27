@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import VectorFieldVisualization from './components/VectorFieldVisualization';
 import PhasePortrait from './components/PhasePortrait';
+import ReactMarkdown from 'react-markdown';
 import './App.css';
 
 const colorSchemes = {
@@ -115,7 +116,6 @@ const predefinedSystems = {
   },
 };
 
-
 function App() {
   const [dx, setDx] = useState(predefinedSystems.custom.dx);
   const [dy, setDy] = useState(predefinedSystems.custom.dy);
@@ -129,6 +129,14 @@ function App() {
   const [backgroundColor, setBackgroundColor] = useState('#000014');
   const [traceMode, setTraceMode] = useState(false);
   const [selectedSystem, setSelectedSystem] = useState('custom');
+  const [showDocs, setShowDocs] = useState(false);
+  const [docContent, setDocContent] = useState('');
+
+  useEffect(() => {
+    fetch('/docs/explanation.md')
+      .then(response => response.text())
+      .then(text => setDocContent(text));
+  }, []);
 
   const generateRandomEquation = () => {
     const terms = ['a', 'b', 'x*y'];
@@ -190,7 +198,7 @@ function App() {
     <div className="App">
       <div className="controls">
         <div>
-        <label>Predefined Systems: </label>
+          <label>Predefined Systems: </label>
           <select value={selectedSystem} onChange={handleSystemChange}>
             {Object.entries(predefinedSystems).map(([key, system]) => (
               <option key={key} value={key} title={system.description}>
@@ -265,43 +273,54 @@ function App() {
             onChange={(e) => setTraceMode(e.target.checked)}
           />
         </div>
+        <div>
+          <button className="doc-button" onClick={() => setShowDocs(!showDocs)}>
+            {showDocs ? 'Hide' : 'Show'} Documentation
+          </button>
+        </div>  
       </div>
+      {showDocs && (
+        <div className="doc-modal">
+          <div className="doc-content">
+            <button className="close-button" onClick={() => setShowDocs(false)}>×</button>
+            <ReactMarkdown>{docContent}</ReactMarkdown>
+          </div>
+        </div>
+      )}
       <div className="visualization-container">
-  <div className="vector-field-container">
-    <VectorFieldVisualization
-      dx={dx}
-      dy={dy}
-      xMin={xMin}
-      xMax={xMax}
-      yMin={yMin}
-      yMax={yMax}
-      a={a}
-      b={b}
-      colorScheme={currentColorScheme}
-      backgroundColor={backgroundColor}
-      onGenerateRandomSystem={generateRandomEquation}
-      traceMode={traceMode}
-    />
-  </div>
-  <div className="phase-portrait-container">
-    <PhasePortrait
-      dx={dx}
-      dy={dy}
-      xMin={xMin}
-      xMax={xMax}
-      yMin={yMin}
-      yMax={yMax}
-      a={a}
-      b={b}
-      colorScheme={currentColorScheme}
-      backgroundColor={backgroundColor}
-
-    />
-  </div>
-</div>
+        <div className="vector-field-container">
+          <VectorFieldVisualization
+            dx={dx}
+            dy={dy}
+            xMin={xMin}
+            xMax={xMax}
+            yMin={yMin}
+            yMax={yMax}
+            a={a}
+            b={b}
+            colorScheme={currentColorScheme}
+            backgroundColor={backgroundColor}
+            onGenerateRandomSystem={generateRandomEquation}
+            traceMode={traceMode}
+          />
+        </div>
+        <div className="phase-portrait-container">
+          <PhasePortrait
+            dx={dx}
+            dy={dy}
+            xMin={xMin}
+            xMax={xMax}
+            yMin={yMin}
+            yMax={yMax}
+            a={a}
+            b={b}
+            colorScheme={currentColorScheme}
+            backgroundColor={backgroundColor}
+          />
+        </div>
+      </div>
     </div>
-
-);
+  );
 }
 
 export default App;

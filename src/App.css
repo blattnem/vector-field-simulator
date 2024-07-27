@@ -118,3 +118,100 @@ input[type="color"]::-webkit-color-swatch {
   border-radius: 50%;
 }
 
+.doc-button {
+  background-color: #89b4fa;
+  color: #1e1e2e;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.doc-button:hover {
+  background-color: #b4befe;
+}
+
+.doc-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(30, 30, 46, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.doc-content {
+  background-color: #181825;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 80%;
+  max-height: 80%;
+  overflow-y: auto;
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #45475a;
+  color: #cdd6f4;
+  border: none;
+  font-size: 20px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.close-button:hover {
+  background-color: #89b4fa;
+  color: #1e1e2e;
+}
+
+.doc-content h1, .doc-content h2, .doc-content h3 {
+  color: #89b4fa;
+}
+
+.doc-content p, .doc-content li {
+  color: #cdd6f4;
+}
+
+.doc-content {
+  background-color: #181825;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 80%;
+  max-height: 80%;
+  overflow-y: auto;
+  position: relative;
+  text-align: left; /* Add this line */
+}
+
+.doc-content h1, 
+.doc-content h2, 
+.doc-content h3, 
+.doc-content h4, 
+.doc-content h5, 
+.doc-content h6, 
+.doc-content p, 
+.doc-content ul, 
+.doc-content ol {
+  text-align: left;
+  max-width: 100%; /* Ensures content doesn't exceed the container width */
+}
+
+.doc-content ul, 
+.doc-content ol {
+  padding-left: 20px; /* Adds some indentation for lists */
+}
