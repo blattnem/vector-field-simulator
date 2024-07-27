@@ -73,6 +73,10 @@
 5. Add option that users can save and upload equations
 6. Incorporating a phase portrait view alongside the vector field visualization
 
+# License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
 Be nice and give some credits.
 
 Have fun!
