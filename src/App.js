@@ -258,33 +258,37 @@ function App() {
           </select>
         </div>
         <div>
-          <label>Background Color: </label>
+          <label>Background: </label>
           <input 
             type="color" 
             value={backgroundColor} 
             onChange={(e) => setBackgroundColor(e.target.value)} 
           />
         </div>
-        <div>
-          <label> Trace Mode:</label>
-          <input
-            type="checkbox"
-            checked={traceMode}
-            onChange={(e) => setTraceMode(e.target.checked)}
-          />
-        </div>
-        <button className="doc-button small" onClick={() => setShowDocs(!showDocs)}>
-      Docs
-    </button>
-      </div>
-      {showDocs && (
-        <div className="doc-modal">
-          <div className="doc-content">
-            <button className="close-button" onClick={() => setShowDocs(false)}>×</button>
-            <ReactMarkdown>{docContent}</ReactMarkdown>
+        <div className="trace-and-doc">
+            <div>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={traceMode}
+                  onChange={(e) => setTraceMode(e.target.checked)}
+                />
+                Trace Mode
+              </label>
+            </div>
+            <button className="doc-button small" onClick={() => setShowDocs(!showDocs)}>
+              Docs
+            </button>
           </div>
         </div>
-      )}
+        {showDocs && (
+  <div className="doc-modal">
+    <div className="doc-content">
+      <button className="close-button" onClick={() => setShowDocs(false)}>×</button>
+      <ReactMarkdown>{docContent}</ReactMarkdown>
+    </div>
+  </div>
+)}
       <div className="visualization-container">
         <div className="vector-field-container">
           <VectorFieldVisualization
