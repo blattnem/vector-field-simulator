@@ -274,7 +274,7 @@ function App() {
           />
         </div>
         <div>
-          <button className="doc-button" onClick={() => setShowDocs(!showDocs)}>
+          <button className="doc-button small" onClick={() => setShowDocs(!showDocs)}>
             {showDocs ? 'Hide' : 'Show'} Documentation
           </button>
         </div>  
