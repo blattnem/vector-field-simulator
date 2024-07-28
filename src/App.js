@@ -35,11 +35,13 @@ const colorSchemes = {
 
 const predefinedSystems = {
   custom: { 
-    name: 'Custom', 
-    dx: 'a*x*(1-x)*(x-1) -y + 2.1', 
-    dy: 'b*y*(1-y)*(1-x)', 
-    a: 4, 
-    b: 1.5,
+    name: 'Van der Pol', 
+    //dx: 'a*x*(1-x)*(x-1) -y + 2.1', 
+    //dy: 'b*y*(1-y)*(1-x)', 
+    dx:'y',
+    dy:'a*(1 - x^2)*y - x',
+    a: 1., 
+    b: 0.,
     description: 'Create your own system or use the random generator.'
   },
   lotkaVolterra: { 
@@ -113,6 +115,14 @@ const predefinedSystems = {
     a: 1, 
     b: 1,
     description: 'Produces interesting circular patterns.'
+  },
+  bllev: { 
+    name: 'Experimental', 
+    dx: 'a*x*(1-x)*(x-1) -y + 2.1', 
+    dy: 'b*y*(1-y)*(1-x)', 
+    a: 3., 
+    b: 1.5,
+    description: 'Experimental system - work in progress.'
   },
 };
 
