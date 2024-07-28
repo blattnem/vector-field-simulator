@@ -72,6 +72,7 @@
 4. Add more pre defined equations
 5. Add option that users can save and upload equations
 6. Incorporating a phase portrait view alongside the vector field visualization
+7. When entering equations by hand no need to re-render everything after every key stroke. Improve.
 
 # License
 

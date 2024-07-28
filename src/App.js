@@ -16,8 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { debounce } from 'lodash';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import VectorFieldVisualization from './components/VectorFieldVisualization';
 import PhasePortrait from './components/PhasePortrait';
 import ReactMarkdown from 'react-markdown';
@@ -159,32 +158,35 @@ function App() {
   const [showDocs, setShowDocs] = useState(false);
   const [docContent, setDocContent] = useState('');
 
-  const debouncedSetA = useMemo(
-    () => debounce((value) => {
-      setA(Number(value));
-      setSelectedSystem('custom');
-    }, 50),
-    []
-  );
+  const updateDx = useCallback((value) => {
+    setDx(value);
+    setSelectedSystem('custom');
+  }, []);
 
-  const debouncedSetB = useMemo(
-    () => debounce((value) => {
-      setB(Number(value));
-      setSelectedSystem('custom');
-    }, 50),
-    []
-  );
+  const updateDy = useCallback((value) => {
+    setDy(value);
+    setSelectedSystem('custom');
+  }, []);
+
+  const debouncedSetA = useCallback((value) => {
+    setA(Number(value));
+    setSelectedSystem('custom');
+  }, []);
+
+  const debouncedSetB = useCallback((value) => {
+    setB(Number(value));
+    setSelectedSystem('custom');
+  }, []);
 
   useEffect(() => {
     fetch('/docs/explanation.md')
       .then(response => response.text())
       .then(text => setDocContent(text));
   }, []);
-
-  const generateRandomEquation = () => {
+  const generateRandomEquation = useCallback(() => {
     const terms = ['a', 'b', 'x*y'];
     const functions = ['sin', 'cos'];
-    
+  
     const generateTerm = (variable) => {
       if (variable === 'x*y') return variable; // Don't modify the interaction term
       const coefficient = Math.floor(Math.random() * 9) + 1; // Random integer between 1 and 9
@@ -194,17 +196,17 @@ function App() {
       }
       return power === 1 ? `${coefficient}*${variable}` : `${coefficient}*${variable}^${power}`;
     };
-    
+  
     const generateExpression = () => {
       let expr = [generateTerm('x'), generateTerm('y')];
-      
+  
       // Add 1-3 additional terms
       const additionalTerms = Math.floor(Math.random() * 3) + 1;
       for (let i = 0; i < additionalTerms; i++) {
         const term = generateTerm(terms[Math.floor(Math.random() * terms.length)]);
         expr.push(term);
       }
-      
+  
       // Randomly apply functions and make terms negative
       expr = expr.map(term => {
         if (Math.random() < 0.3 && term !== 'x*y') {
@@ -213,29 +215,29 @@ function App() {
         }
         return Math.random() < 0.5 ? `-${term}` : term;
       });
-      
+  
       return expr.join(' + ').replace(/\+ -/g, '- ');
     };
-    
+  
     setDx(generateExpression());
     setDy(generateExpression());
     setSelectedSystem('custom');
-    
+  
     // Set 'a' to -1 and 'b' to 1
     setA(-1);
     setB(1);
-  };
+  }, [setDx, setDy, setSelectedSystem, setA, setB]);
 
-  const handleSystemChange = (e) => {
+  const handleSystemChange = useCallback((e) => {
     const system = predefinedSystems[e.target.value];
     setSelectedSystem(e.target.value);
     setDx(system.dx);
     setDy(system.dy);
     setA(system.a);
     setB(system.b);
-  };
+  }, []);
 
-  const currentColorScheme = colorSchemes[colorScheme] || colorSchemes.rainbow;
+  const currentColorScheme = useMemo(() => colorSchemes[colorScheme] || colorSchemes.rainbow, [colorScheme]);
 
   return (
     <div className="App">
@@ -252,11 +254,11 @@ function App() {
         </div>
         <div>
           <label>dx/dt: </label>
-          <input value={dx} onChange={(e) => {setDx(e.target.value); setSelectedSystem('custom');}} />
+          <input value={dx} onChange={(e) => updateDx(e.target.value)} />
         </div>
         <div>
           <label>dy/dt: </label>
-          <input value={dy} onChange={(e) => {setDy(e.target.value); setSelectedSystem('custom');}} />
+          <input value={dy} onChange={(e) => updateDy(e.target.value)} />
         </div>
         <div>
           <label>X Range: </label>
@@ -309,29 +311,29 @@ function App() {
           />
         </div>
         <div className="trace-and-doc">
-            <div>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={traceMode}
-                  onChange={(e) => setTraceMode(e.target.checked)}
-                />
-                Trace Mode
-              </label>
-            </div>
-            <button className="doc-button small" onClick={() => setShowDocs(!showDocs)}>
-              Docs
-            </button>
+          <div>
+            <label>
+              <input
+                type="checkbox"
+                checked={traceMode}
+                onChange={(e) => setTraceMode(e.target.checked)}
+              />
+              Trace Mode
+            </label>
+          </div>
+          <button className="doc-button small" onClick={() => setShowDocs(!showDocs)}>
+            Docs
+          </button>
+        </div>
+      </div>
+      {showDocs && (
+        <div className="doc-modal">
+          <div className="doc-content">
+            <button className="close-button" onClick={() => setShowDocs(false)}>×</button>
+            <ReactMarkdown>{docContent}</ReactMarkdown>
           </div>
         </div>
-        {showDocs && (
-  <div className="doc-modal">
-    <div className="doc-content">
-      <button className="close-button" onClick={() => setShowDocs(false)}>×</button>
-      <ReactMarkdown>{docContent}</ReactMarkdown>
-    </div>
-  </div>
-)}
+      )}
       <div className="visualization-container">
         <div className="vector-field-container">
           <VectorFieldVisualization
