@@ -1,6 +1,6 @@
 /*
  * Vector-Field-Visualizer - A tool for visualizing vector fields
- * Copyright (C) 2024 Marcel Blattner
+ * Copyright (C) 2024 Marcel Blattner, blattnem@gmail.com
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
   const isMounted = useRef(true);
   const particlesRef = useRef([]);
   const tracedParticlesRef = useRef([]);
+  const dt = 0.01; 
 
   useEffect(() => {
     if (traceMode) {
@@ -66,10 +67,10 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
         
         if (cleanExpr === '') {
           throw new Error('Empty expression');
-        }
+        } 
         
         const parse = (str) => {
-          const tokens = str.match(/(\d+\.?\d*|\+|\-|\*|\/|\(|\)|\^|[a-zA-Z]+)/g) || [];
+          const tokens = str.match(/(\d+\.?\d*|\+|-|\*|\/|\(|\)|\^|[a-zA-Z]+)/g) || [];
           let pos = 0;
           
           const parseExpression = () => {
@@ -161,6 +162,39 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
     };
   }, [safeSetError]);
 
+  const updateParticles = useCallback(() => {
+    const updatedParticles = new Float32Array(particlesRef.current.length);
+    
+    for (let i = 0; i < particlesRef.current.length; i += 3) {
+      const x = particlesRef.current[i];
+      const y = particlesRef.current[i + 1];
+      const age = particlesRef.current[i + 2];
+      let vx, vy;
+      try {
+        vx = evaluateExpression(dx, x, y, a, b);
+        vy = evaluateExpression(dy, x, y, a, b);
+        if (isFinite(vx) && isFinite(vy)) {
+          const magnitude = Math.sqrt(vx * vx + vy * vy);
+          const scaleFactor = 2 / (1 + magnitude);
+          
+          updatedParticles[i] = x + vx * scaleFactor * dt;
+          updatedParticles[i + 1] = y + vy * scaleFactor * dt;
+          updatedParticles[i + 2] = age + 1;
+        } else {
+          updatedParticles[i] = x;
+          updatedParticles[i + 1] = y;
+          updatedParticles[i + 2] = age;
+        }
+      } catch (err) {
+        updatedParticles[i] = x;
+        updatedParticles[i + 1] = y;
+        updatedParticles[i + 2] = age;
+      }
+    }
+    
+    particlesRef.current = updatedParticles;
+  }, [dx, dy, a, b, evaluateExpression, dt]);
+
   useEffect(() => {
     if (canvasSize.width === 0 || canvasSize.height === 0) return;
 
@@ -181,13 +215,11 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
 
     // Initialize particles if they don't exist
     if (particlesRef.current.length === 0) {
+      particlesRef.current = new Float32Array(particleCount * 3);
       for (let i = 0; i < particleCount; i++) {
-        particlesRef.current.push({
-          x: xMin + Math.random() * (xMax - xMin),
-          y: yMin + Math.random() * (yMax - yMin),
-          age: Math.random() * maxAge,
-          fadeInAge: Math.floor(Math.random() * fadeInDuration)
-        });
+        particlesRef.current[i * 3] = xMin + Math.random() * (xMax - xMin);
+        particlesRef.current[i * 3 + 1] = yMin + Math.random() * (yMax - yMin);
+        particlesRef.current[i * 3 + 2] = Math.random() * maxAge;
       }
     }
 
@@ -202,47 +234,53 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
     
       let successfulEvaluation = false;
     
-      // Mutable update function
-      const updateParticle = (particle) => {
+      updateParticles();
+    
+      // Render particles
+      for (let i = 0; i < particlesRef.current.length / 3; i++) {
+        const x = particlesRef.current[i * 3];
+        const y = particlesRef.current[i * 3 + 1];
+        const age = particlesRef.current[i * 3 + 2];
+    
         let vx, vy;
         try {
-          vx = evaluateExpression(dx, particle.x, particle.y, a, b);
-          vy = evaluateExpression(dy, particle.x, particle.y, a, b);
+          vx = evaluateExpression(dx, x, y, a, b);
+          vy = evaluateExpression(dy, x, y, a, b);
           if (isFinite(vx) && isFinite(vy)) {
             successfulEvaluation = true;
           } else {
-            return particle;
+            continue;
           }
         } catch (err) {
-          return particle;
+          continue;
         }
     
         const magnitude = Math.sqrt(vx * vx + vy * vy);
-        const scaleFactor = 2 / (1 + magnitude);
-        
-        particle.x += vx * scaleFactor * dt;
-        particle.y += vy * scaleFactor * dt;
-        particle.age += 1;
     
         // Calculate alpha based on particle age
         let alpha;
-        if (particle.age <= particle.fadeInAge) {
-          alpha = particle.age / particle.fadeInAge;
-        } else if (particle.age > maxVisibleAge) {
-          alpha = (maxAge - particle.age) / fadeOutDuration;
+        if (age <= fadeInDuration) {
+          alpha = age / fadeInDuration;
+        } else if (age > maxVisibleAge) {
+          alpha = (maxAge - age) / fadeOutDuration;
         } else {
           alpha = 1;
         }
     
         // Smooth transition for particles leaving the system bounds
-        if (particle.x < xMin || particle.x > xMax || particle.y < yMin || particle.y > yMax) {
+        if (x < xMin || x > xMax || y < yMin || y > yMax) {
           alpha *= 0.95;
         }
     
         alpha = Math.max(0, Math.min(1, alpha));
     
-        const canvasX = ((particle.x - xMin) / (xMax - xMin)) * width;
-        const canvasY = height - ((particle.y - yMin) / (yMax - yMin)) * height;
+        const canvasX = ((x - xMin) / (xMax - xMin)) * width;
+        const canvasY = height - ((y - yMin) / (yMax - yMin)) * height;
+    
+        // Check if canvasX and canvasY are finite before drawing
+        if (!isFinite(canvasX) || !isFinite(canvasY)) {
+          continue;
+        }
     
         const color = colorScheme.getColor(Math.atan2(vy, vx), alpha, magnitude);
         ctx.beginPath();
@@ -250,28 +288,32 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
         ctx.fillStyle = color;
         ctx.fill();
     
-        const gradient = ctx.createRadialGradient(canvasX, canvasY, 0, canvasX, canvasY, 4);
-        gradient.addColorStop(0, color);
-        gradient.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(canvasX - 4, canvasY - 4, 8, 8);
-    
-        // Stagger particle reinitialization
-        if (particle.age > maxAge || alpha <= 0.01) {
-          if (frame % 10 === particlesRef.current.indexOf(particle) % 10) { // Reinitialize only a subset of particles each frame
-            particle.x = xMin + Math.random() * (xMax - xMin);
-            particle.y = yMin + Math.random() * (yMax - yMin);
-            particle.age = 0;
-            particle.fadeInAge = Math.floor(Math.random() * fadeInDuration);
+        // Only create gradient if all values are finite
+        if (isFinite(canvasX) && isFinite(canvasY)) {
+          try {
+            const gradient = ctx.createRadialGradient(canvasX, canvasY, 0, canvasX, canvasY, 4);
+            gradient.addColorStop(0, color);
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(canvasX - 4, canvasY - 4, 8, 8);
+          } catch (err) {
+            console.error("Error creating gradient:", err);
+            // Fallback to solid color if gradient creation fails
+            ctx.fillStyle = color;
+            ctx.fillRect(canvasX - 4, canvasY - 4, 8, 8);
           }
         }
-
-        return particle;
-      };
-
-      // Update particles mutably
-      particlesRef.current = particlesRef.current.map(updateParticle);
     
+        // Stagger particle reinitialization
+        if (age > maxAge || alpha <= 0.01) {
+          if (frame % 10 === i % 10) { // Reinitialize only a subset of particles each frame
+            particlesRef.current[i * 3] = xMin + Math.random() * (xMax - xMin);
+            particlesRef.current[i * 3 + 1] = yMin + Math.random() * (yMax - yMin);
+            particlesRef.current[i * 3 + 2] = 0;
+          }
+        }
+      }
+
       // Handle traced particles
       if (traceMode) {
         tracedParticlesRef.current = tracedParticlesRef.current.map(particle => {
@@ -282,16 +324,16 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
           } catch (err) {
             return particle;
           }
-
+      
           const magnitude = Math.sqrt(vx * vx + vy * vy);
           const scaleFactor = 2 / (1 + magnitude);
           
           const newX = particle.x + vx * scaleFactor * dt;
           const newY = particle.y + vy * scaleFactor * dt;
-
+      
           const canvasX = ((newX - xMin) / (xMax - xMin)) * width;
           const canvasY = height - ((newY - yMin) / (yMax - yMin)) * height;
-
+      
           return {
             x: newX,
             y: newY,
@@ -330,7 +372,7 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [dx, dy, xMin, xMax, yMin, yMax, a, b, canvasSize, evaluateExpression, colorScheme, backgroundColor, safeSetError, traceMode]);
+  }, [dx, dy, xMin, xMax, yMin, yMax, a, b, canvasSize, evaluateExpression, colorScheme, backgroundColor, safeSetError, traceMode, updateParticles]);
 
   const clearTraces = () => {
     tracedParticlesRef.current = [];
