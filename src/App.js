@@ -42,7 +42,7 @@ const predefinedSystems = {
     dy:'a*(1 - x^2)*y - x',
     a: 1., 
     b: 0.,
-    description: 'Create your own system or use the random generator.'
+    description: 'Describes oscillations with nonlinear damping.'
   },
   lotkaVolterra: { 
     name: 'Lotka-Volterra', 
