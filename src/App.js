@@ -183,33 +183,45 @@ function App() {
       .then(response => response.text())
       .then(text => setDocContent(text));
   }, []);
-  const generateRandomEquation = useCallback(() => {
-    const terms = ['a', 'b', 'x*y'];
-    const functions = ['sin', 'cos'];
+
   
-    const generateTerm = (variable) => {
-      if (variable === 'x*y') return variable; // Don't modify the interaction term
-      const coefficient = Math.floor(Math.random() * 9) + 1; // Random integer between 1 and 9
-      const power = Math.floor(Math.random() * 3) + 1; // Random integer between 1 and 3
-      if (coefficient === 1) {
-        return power === 1 ? variable : `${variable}^${power}`;
+  const generateRandomEquation = useCallback(() => {
+    const baseTerms = ['x', 'y', 'x*y'];
+    const functions = ['sin', 'cos','tan'];
+  
+    const generateTerm = () => {
+      const baseVariable = baseTerms[Math.floor(Math.random() * baseTerms.length)];
+      let variable = baseVariable;
+  
+      // Add power only to 'x' or 'y', not to 'x*y'
+      if (baseVariable !== 'x*y' && Math.random() < 0.3) {
+        const power = Math.floor(Math.random() * 2) + 2; // Random integer: 2 or 3
+        variable = `${baseVariable}^${power}`;
       }
-      return power === 1 ? `${coefficient}*${variable}` : `${coefficient}*${variable}^${power}`;
+  
+      const useParameter = Math.random() < 0.5;
+      const coefficient = useParameter 
+        ? (Math.random() < 0.5 ? 'a' : 'b')
+        : ((Math.floor(Math.random() * 90) + 1) / 10).toFixed(1); // Random float between 0.1 and 9.0
+  
+      if (coefficient === '1.0') {
+        return variable;
+      }
+      return `${coefficient}*${variable}`;
     };
   
     const generateExpression = () => {
-      let expr = [generateTerm('x'), generateTerm('y')];
+      let expr = [];
   
-      // Add 1-3 additional terms
-      const additionalTerms = Math.floor(Math.random() * 3) + 1;
-      for (let i = 0; i < additionalTerms; i++) {
-        const term = generateTerm(terms[Math.floor(Math.random() * terms.length)]);
-        expr.push(term);
+      // Generate 3-5 terms
+      const termCount = Math.floor(Math.random() * 3) + 3;
+      for (let i = 0; i < termCount; i++) {
+        expr.push(generateTerm());
       }
   
-      // Randomly apply functions and make terms negative
+      // Randomly apply functions
       expr = expr.map(term => {
-        if (Math.random() < 0.3 && term !== 'x*y') {
+        if (Math.random() < 0.3 && !term.includes('x*y') && !term.includes('a') && !term.includes('b')) {
           const func = functions[Math.floor(Math.random() * functions.length)];
           term = `${func}(${term})`;
         }
@@ -223,7 +235,7 @@ function App() {
     setDy(generateExpression());
     setSelectedSystem('custom');
   
-    // Set 'a' to -1 and 'b' to 1
+    // Set initial values for 'a' and 'b'
     setA(-1);
     setB(1);
   }, [setDx, setDy, setSelectedSystem, setA, setB]);
