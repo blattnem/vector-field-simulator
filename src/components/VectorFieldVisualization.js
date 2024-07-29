@@ -206,7 +206,7 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
     canvas.width = width;
     canvas.height = height;
 
-    const particleCount = 8000;
+    const particleCount = 12000;
     const maxAge = 300;
     const fadeInDuration = 30;
     const fadeOutDuration = 30;
