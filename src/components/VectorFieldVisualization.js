@@ -29,7 +29,7 @@ const VectorFieldVisualization = ({ dx, dy, xMin, xMax, yMin, yMax, a, b, colorS
 
   useEffect(() => {
     if (traceMode) {
-      tracedParticlesRef.current = Array(20).fill().map(() => ({
+      tracedParticlesRef.current = Array(50).fill().map(() => ({
         x: xMin + Math.random() * (xMax - xMin),
         y: yMin + Math.random() * (yMax - yMin),
         history: []
