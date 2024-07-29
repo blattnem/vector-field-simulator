@@ -132,6 +132,46 @@ const predefinedSystems = {
     b: 1,
     description: 'Produces interesting circular patterns.'
   },
+  spiraling: {
+    name: 'Spiraling',
+    dx: 'x - y + a*x*(x^2 + y^2)',
+    dy: 'x + y + b*y*(x^2 + y^2)',
+    a: -1,
+    b: -1,
+    description: 'Produces spiral patterns with controllable direction and tightness.'
+  },
+  hamiltonian: {
+    name: 'Hamiltonian',
+    dx: 'y',
+    dy: '-sin(x) - a*sin(b*x)',
+    a: 0.5,
+    b: 2,
+    description: 'A simple Hamiltonian system that can exhibit both regular and irregular behavior.'
+  },
+  hopfBifurcation: {
+    name: 'Hopf Bifurcation',
+    dx: 'a*x - y - x*(x^2 + y^2)',
+    dy: 'x + a*y - y*(x^2 + y^2)',
+    a: 0,
+    b: 0,
+    description: 'Demonstrates the Hopf bifurcation, transitioning between a stable focus and a limit cycle.'
+  },
+  AlleePredatorPrey: {
+    name: 'Allee Predator-Prey',
+    dx: 'x*(x - a)*(1 - x) - b*x*y',
+    dy: 'y*(-1 + x)',
+    a: 0.1,
+    b: 1,
+    description: 'A predator-prey model incorporating the Allee effect in the prey population.'
+  },
+  forcedOscillator: {
+    name: 'Forced Oscillator',
+    dx: 'y',
+    dy: '-x - a*y + b*cos(x)',
+    a: 0.2,
+    b: 1,
+    description: 'A damped oscillator with periodic forcing, capable of showing resonance effects.'
+  },
   bllev: { 
     name: 'Experimental', 
     dx: 'a*x*(1-x)*(x-1) -y + 2.1', 
